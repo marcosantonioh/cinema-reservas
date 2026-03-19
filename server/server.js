@@ -19,7 +19,7 @@ const supabase = createClient(
 // ========== ROTAS ==========
 
 // 1. Listar todos os assentos
-app.get('/api/assentos', async (req, res) => {
+app.get('/assentos', async (req, res) => {
   const { data, error } = await supabase
     .from('assentos')
     .select('*')
@@ -30,7 +30,7 @@ app.get('/api/assentos', async (req, res) => {
 });
 
 // 2. Reservar assento (precisa de autenticação)
-app.post('/api/reservar', async (req, res) => {
+app.post('/reservar', async (req, res) => {
   const { identificador } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
   
@@ -73,7 +73,7 @@ app.post('/api/reservar', async (req, res) => {
 });
 
 // 3. Cancelar reserva (precisa de autenticação)
-app.post('/api/cancelar', async (req, res) => {
+app.post('/cancelar', async (req, res) => {
   const { identificador } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
   
@@ -116,7 +116,7 @@ app.post('/api/cancelar', async (req, res) => {
 });
 
 // 4. Login (retorna token)
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -132,22 +132,6 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
-// 5. Registro (opcional, útil para testes)
-app.post('/api/registro', async (req, res) => {
-  const { email, password } = req.body;
-  
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password
-  });
-
-  if (error) return res.status(400).json({ error: error.message });
-  
-  res.json({ 
-    user: data.user,
-    message: 'Usuário criado com sucesso'
-  });
-});
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
