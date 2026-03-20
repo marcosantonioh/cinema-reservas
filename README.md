@@ -7,7 +7,7 @@ Projeto desenvolvido para a disciplina de Sistemas Distribuídos.
 Implementar um sistema distribuído de reserva de assentos de cinema, utilizando:
 
 - Frontend separado do backend
-- Comunicação via API REST
+- Comunicação via API
 - Autenticação de usuários
 - Persistência de dados em nuvem
 
@@ -63,11 +63,9 @@ SD_TRABALHO01/
 │   ├── package.json
 │   └── vite.config.js
 ├── server/                  
-│   ├── index.js             
+│   ├── server.js             
 │   ├── .env                 
-│   ├── package.json
-│   └── seed.sql             
-├── screenshots/            
+│   ├── package.json                     
 ├── README.md
 
 ---
@@ -83,17 +81,10 @@ SD_TRABALHO01/
 
 ## 1. Clonar o repositório
 
-git clone SEU_LINK_AQUI
-cd SD_Trabalho1
-
 2. Rodar o Backend
 cd server
 npm install
-node index.js
-
-Servidor rodando em:
-
-http://localhost:3000
+node server.js
 
 
 3. Rodar o Frontend
@@ -101,48 +92,5 @@ cd client
 npm install
 npm run dev
 
-Acesse:
-
-http://localhost:5173
 
 
-
-## 4. Configuração do Supabase
-
-1 Criar projeto no Supabase
-
-2 Criar tabela assentos com:
-
-Campo	    Tipo
-id	        uuid
-code	    text
-status	    text
-category	text
-
-3 Inserir dados de exemplo:
-
-A1 | disponível | normal
-A2 | ocupado | vip
-
-
-Autenticação
-
-Email e senha via Supabase
-
-Usuário deve estar cadastrado para acessar o sistema
-
-Prints do Sistema
-Tela de Login
-
-Painel de Assentos
-
-Endpoints da API
-
-GET /assentos
-Lista todos os assentos
-
-POST /reserva
-Reserva um assento
-
-POST /cancela
-Cancela uma reserva

@@ -21,13 +21,12 @@
             :key="assento.id"
             class="assento"
             :class="{
-              'disponivel': assento.status === 'disponivel',
-              'ocupado': assento.status === 'ocupado',
+              // Se status for true, aplica 'ocupado'. Se for false, 'disponivel'
+              'ocupado': assento.status === true,
+              'disponivel': assento.status === false,
               'vip': assento.categoria === 'vip',
               'selecionado': assentoSelecionado?.id === assento.id
             }"
-            :disabled="assento.status === 'ocupado'"
-            :title="`Assento ${assento.identificador} — ${assento.categoria.toUpperCase()} — ${assento.status}`"
             @click="selecionarAssento(assento)"
           >
             {{ assento.col }}
@@ -37,12 +36,7 @@
       </div>
     </div>
 
-    <div class="legenda">
-      <div class="leg-item"><div class="leg-box disponivel"></div> Disponível</div>
-      <div class="leg-item"><div class="leg-box ocupado"></div> Ocupado</div>
-      <div class="leg-item"><div class="leg-box vip"></div> VIP</div>
-      <div class="leg-item"><div class="leg-box selecionado"></div> Selecionado</div>
-    </div>
+    
 
     <div v-if="assentoSelecionado" class="painel">
       <div class="painel-header">
@@ -51,7 +45,7 @@
       <div class="painel-meta">
         <span class="badge" :class="assentoSelecionado.categoria">{{ assentoSelecionado.categoria }}</span>
         <span class="badge" :class="assentoSelecionado.status === 'disponivel' ? 'status-disp' : 'status-ocup'">
-          {{ assentoSelecionado.status }}
+          {{ assentoSelecionado.status ? 'Indisponível' : 'Disponível' }}
         </span>
       </div>
       <button
@@ -117,8 +111,13 @@ export default {
     },
     async reservarAssento() {
       try {
-        await api.post(`/assentos/${this.assentoSelecionado.id}/reservar`);
-        await this.carregarAssentos();
+        // Agora o endpoint bate com o backend corrigido
+        const response = await api.post(`/assentos/${this.assentoSelecionado.id}/reservar`);
+        
+        // Atualiza a lista local sem precisar recarregar tudo do servidor (mais rápido)
+        const index = this.assentos.findIndex(a => a.id === this.assentoSelecionado.id);
+        this.assentos[index].status = 'ocupado';
+        
         this.assentoSelecionado = null;
         alert('Reserva realizada com sucesso!');
       } catch (error) {
@@ -128,7 +127,11 @@ export default {
     async cancelarReserva() {
       try {
         await api.post(`/assentos/${this.assentoSelecionado.id}/cancelar`);
-        await this.carregarAssentos();
+        
+        // Atualiza o estado local
+        const index = this.assentos.findIndex(a => a.id === this.assentoSelecionado.id);
+        this.assentos[index].status = 'disponivel';
+        
         this.assentoSelecionado = null;
         alert('Reserva cancelada com sucesso!');
       } catch (error) {

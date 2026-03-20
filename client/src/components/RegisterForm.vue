@@ -111,11 +111,10 @@ export default {
 
 .logo-tela {
   width: 48px;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.8), transparent);
-  border-radius: 50%;
+  height: 3px;
+  background: rgba(201, 168, 76, 0.7);
+  border-radius: 2px;
   margin: 0 auto 14px;
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
 }
 
 .logo-title {
@@ -155,6 +154,7 @@ form {
 
 .form-input {
   width: 100%;
+  box-sizing: border-box;
   background: #13131a;
   border: 0.5px solid #2a2a3a;
   border-radius: 8px;
@@ -164,19 +164,31 @@ form {
   color: #f0eee8;
   outline: none;
   transition: border-color 0.2s;
+  color-scheme: dark;
+  -webkit-text-fill-color: #f0eee8;
 }
 
 .form-input::placeholder {
   color: #3a3a50;
+  -webkit-text-fill-color: #3a3a50;
 }
 
 .form-input:focus {
   border-color: #c9a84c;
 }
 
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #13131a inset;
+  -webkit-text-fill-color: #f0eee8;
+  transition: background-color 9999s ease;
+}
+
 /* ── Botão principal ──────────────────────────── */
 .btn-registrar-submit {
   width: 100%;
+  box-sizing: border-box;
   margin-top: 8px;
   padding: 12px;
   background: rgba(201, 168, 76, 0.12);
@@ -186,14 +198,19 @@ form {
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s;
   letter-spacing: 0.3px;
 }
 
 .btn-registrar-submit:hover {
   background: rgba(201, 168, 76, 0.2);
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.5);
+}
+
+.btn-registrar-submit:active {
+  transform: scale(0.98);
 }
 
 /* ── Feedback ─────────────────────────────────── */
@@ -221,6 +238,7 @@ form {
   border: 0.5px solid rgba(46, 204, 138, 0.2);
   border-radius: 6px;
   padding: 8px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,6 +248,7 @@ form {
 .sucesso-icon {
   font-weight: 600;
   font-size: 13px;
+  line-height: 1;
 }
 
 /* ── Rodapé ───────────────────────────────────── */

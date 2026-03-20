@@ -9,7 +9,7 @@ const email = ref("");
 const password = ref("");
 const seats = ref([]);
 
-// 🔐 LOGIN
+// LOGIN
 const login = async () => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.value,
@@ -24,25 +24,25 @@ const login = async () => {
   }
 };
 
-// 🚪 LOGOUT
+// LOGOUT
 const logout = async () => {
   await supabase.auth.signOut();
   user.value = null;
 };
 
-// 🎬 BUSCAR ASSENTOS
+// BUSCAR ASSENTOS
 const loadSeats = async () => {
   const res = await axios.get("http://localhost:3000/assentos");
   seats.value = res.data;
 };
 
-// 🎟️ RESERVAR
+// RESERVAR
 const reserve = async (id) => {
   await axios.post("http://localhost:3000/reserva", { id });
   loadSeats();
 };
 
-// ❌ CANCELAR
+// CANCELAR
 const cancel = async (id) => {
   await axios.post("http://localhost:3000/cancelar", { id });
   loadSeats();
