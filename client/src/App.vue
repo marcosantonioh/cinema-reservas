@@ -2,103 +2,96 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import supabase from "./supabase";
-
-// estado
-const user = ref(null);
-const email = ref("");
-const password = ref("");
-const seats = ref([]);
-
-// LOGIN
-const login = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value,
-  });
-
-  if (error) {
-    alert("Erro no login");
-  } else {
-    user.value = data.user;
-    loadSeats();
-  }
-};
-
-// LOGOUT
-const logout = async () => {
-  await supabase.auth.signOut();
-  user.value = null;
-};
-
-// BUSCAR ASSENTOS
-const loadSeats = async () => {
-  const res = await axios.get("http://localhost:3000/assentos");
-  seats.value = res.data;
-};
-
-// RESERVAR
-const reserve = async (id) => {
-  await axios.post("http://localhost:3000/reserva", { id });
-  loadSeats();
-};
-
-// CANCELAR
-const cancel = async (id) => {
-  await axios.post("http://localhost:3000/cancelar", { id });
-  loadSeats();
-};
-
-// verifica se já está logado
-onMounted(async () => {
-  const { data } = await supabase.auth.getUser();
-  if (data.user) {
-    user.value = data.user;
-    loadSeats();
-  }
-});
-</script>
-<template>
-  <div id="app">
-    <LoginForm 
-      v-if="!autenticado && modoLogin"
-      @login-sucesso="autenticado = true"
-      @trocar-modo="modoLogin = false"
-    />
-    <RegisterForm 
-      v-else-if="!autenticado && !modoLogin"
-      @trocar-modo="modoLogin = true"
-    />
-    <AssentosList 
-      v-else
-      @logout="autenticado = false"
-    />
-  </div>
-</template>
-
-<script>
 import LoginForm from './components/LoginForm.vue';
 import RegisterForm from './components/RegisterForm.vue';
 import AssentosList from './components/AssentosList.vue';
 
-export default {
-  components: {
-    LoginForm,
-    RegisterForm,
-    AssentosList
-  },
-  data() {
-    return {
-      autenticado: !!localStorage.getItem('token'),
-      modoLogin: true
-    };
+// --- ESTADOS (Variáveis) ---
+const autenticado = ref(false);
+const modoLogin = ref(true);
+const seats = ref([]);
+
+// --- FUNÇÕES ---
+
+// 1. Buscar Assentos no seu Servidor Node
+const loadSeats = async () => {
+  try {
+    const res = await axios.get("http://localhost:3000/assentos");
+    seats.value = res.data;
+  } catch (err) {
+    console.error("Erro ao carregar assentos:", err);
   }
 };
+
+// 2. Reservar (Enviando a "Pulseira"/Token)
+const reserve = async (id) => {
+  try {
+    // Pegamos o token atual do Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    // Enviamos para a sua rota do Node (ajustada para o padrão /assentos/id/reservar)
+    await axios.post(`http://localhost:3000/assentos/${id}/reservar`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    alert("Assento reservado!");
+    await loadSeats(); // Atualiza a lista na tela
+  } catch (err) {
+    alert(err.response?.data?.error || "Erro ao reservar");
+  }
+};
+
+// 3. Logout
+const logout = async () => {
+  await supabase.auth.signOut(); // Encerra a sessão no Supabase
+  autenticado.value = false;     // Muda a tela para o Login
+  localStorage.removeItem('token');
+};
+
+// 4. Verificar se já estava logado ao abrir a página
+onMounted(async () => {
+  const { data } = await supabase.auth.getUser();
+  if (data.user) {
+    autenticado.value = true;
+    loadSeats();
+  }
+});
 </script>
+
+<template>
+  <div id="app">
+    <LoginForm 
+      v-if="!autenticado && modoLogin"
+      @login-sucesso="autenticado = true; loadSeats()"
+      @trocar-modo="modoLogin = false"
+    />
+    
+    <RegisterForm 
+      v-else-if="!autenticado && !modoLogin"
+      @trocar-modo="modoLogin = true"
+    />
+    
+    <AssentosList 
+      v-else
+      :seats="seats"
+      @reservar="reserve"
+      @logout="logout"
+    />
+  </div>
+</template>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f0f2f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1a1a1a; /* Cor mais "Cinema" */
+  color: white;
+}
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 </style>

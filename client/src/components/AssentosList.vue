@@ -1,4 +1,5 @@
 <template>
+  <div class="assentos-bg">
   <div class="assentos-container">
     <div class="header">
       <div class="header-left">
@@ -21,12 +22,13 @@
             :key="assento.id"
             class="assento"
             :class="{
-              // Se status for true, aplica 'ocupado'. Se for false, 'disponivel'
-              'ocupado': assento.status === true,
-              'disponivel': assento.status === false,
+              'disponivel': assento.status === true,
+              'ocupado': assento.status === false,
               'vip': assento.categoria === 'vip',
               'selecionado': assentoSelecionado?.id === assento.id
             }"
+            :disabled="assento.status === false"
+            :title="`Assento ${assento.identificador} — ${assento.categoria.toUpperCase()} — ${assento.status}`"
             @click="selecionarAssento(assento)"
           >
             {{ assento.col }}
@@ -36,7 +38,12 @@
       </div>
     </div>
 
-    
+    <div class="legenda">
+      <div class="leg-item"><div class="leg-box disponivel"></div> Disponível</div>
+      <div class="leg-item"><div class="leg-box ocupado"></div> Ocupado</div>
+      <div class="leg-item"><div class="leg-box vip"></div> VIP</div>
+      <div class="leg-item"><div class="leg-box selecionado"></div> Selecionado</div>
+    </div>
 
     <div v-if="assentoSelecionado" class="painel">
       <div class="painel-header">
@@ -45,11 +52,12 @@
       <div class="painel-meta">
         <span class="badge" :class="assentoSelecionado.categoria">{{ assentoSelecionado.categoria }}</span>
         <span class="badge" :class="assentoSelecionado.status === 'disponivel' ? 'status-disp' : 'status-ocup'">
-          {{ assentoSelecionado.status ? 'Indisponível' : 'Disponível' }}
+          {{ assentoSelecionado.status ? 'Disponível' : 'Indisponível' }}
+          <!-- <p>{{ assentoSelecionado.status }}</p> -->
         </span>
       </div>
       <button
-        v-if="assentoSelecionado.status === 'disponivel'"
+        v-if="assentoSelecionado.status"
         class="btn-acao btn-reservar"
         @click="reservarAssento"
       >
@@ -64,17 +72,16 @@
       </button>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
 import api from '../services/api';
 
-const VIP_ROWS = ['A', 'B'];
-
 export default {
   data() {
     return {
-      rows: ['A', 'B', 'C', 'D', 'E'],
+      rows: ['A', 'B', 'C', 'D'],
       assentos: [],
       assentoSelecionado: null,
     };
@@ -89,7 +96,6 @@ export default {
     async carregarAssentos() {
       try {
         const response = await api.get('/assentos');
-        // Adiciona as propriedades row e col se o backend não as retornar
         this.assentos = response.data.map(a => ({
           ...a,
           row: a.identificador[0],
@@ -109,40 +115,49 @@ export default {
         this.assentoSelecionado = assento;
       }
     },
+    logout() {
+      // 1. Limpa os dados do navegador
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // 2. Avisa o App.vue que o usuário saiu (dispara o evento @logout)
+      this.$emit('logout');
+    },
     async reservarAssento() {
+      // 1. Verificamos se o assento foi selecionado corretamente
+      if (!this.assentoSelecionado || !this.assentoSelecionado.id) {
+        alert("Erro: ID do assento não encontrado.");
+        return;
+      }
+
       try {
-        // Agora o endpoint bate com o backend corrigido
-        const response = await api.post(`/assentos/${this.assentoSelecionado.id}/reservar`);
+        // 2. Chamamos a API. O 'api.js' vai colocar o token sozinho!
+        // Não precisa de 'const { data: { session } } = await supabase...' aqui.
+        await api.post(`/assentos/${this.assentoSelecionado.id}/reservar`);
         
-        // Atualiza a lista local sem precisar recarregar tudo do servidor (mais rápido)
-        const index = this.assentos.findIndex(a => a.id === this.assentoSelecionado.id);
-        this.assentos[index].status = 'ocupado';
-        
-        this.assentoSelecionado = null;
+        await this.carregarAssentos(); // Atualiza as cores na tela
+        this.assentoSelecionado = null; // Limpa a seleção
         alert('Reserva realizada com sucesso!');
       } catch (error) {
+        // Se der erro de RLS ou 404, ele vai aparecer aqui
         alert(error.response?.data?.error || 'Erro ao reservar');
       }
     },
+
     async cancelarReserva() {
+      if (!this.assentoSelecionado || !this.assentoSelecionado.id) return;
+
       try {
+        // Mesma coisa aqui: simples e direto
         await api.post(`/assentos/${this.assentoSelecionado.id}/cancelar`);
         
-        // Atualiza o estado local
-        const index = this.assentos.findIndex(a => a.id === this.assentoSelecionado.id);
-        this.assentos[index].status = 'disponivel';
-        
+        await this.carregarAssentos();
         this.assentoSelecionado = null;
-        alert('Reserva cancelada com sucesso!');
+        alert('Reserva cancelada!');
       } catch (error) {
         alert(error.response?.data?.error || 'Erro ao cancelar');
       }
-    },
-    logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      this.$emit('logout');
-    },
+    }
   },
 };
 </script>
@@ -150,7 +165,8 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
-:root {
+/* ── Variáveis (scoped — não usar :root em scoped) ── */
+.assentos-bg {
   --cinema-bg: #0a0a0f;
   --surface: #13131a;
   --surface2: #1c1c28;
@@ -160,16 +176,19 @@ export default {
   --red: #e55353;
   --text: #f0eee8;
   --muted: #7a7a8c;
+
+  background: var(--cinema-bg);
+  min-height: 100vh;
+  width: 100%;
 }
 
 .assentos-container {
   font-family: 'DM Sans', sans-serif;
-  background: var(--cinema-bg);
   color: var(--text);
-  min-height: 100vh;
   padding: 32px 28px 40px;
   max-width: 680px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ── Header ───────────────────────────────────── */
@@ -205,7 +224,8 @@ export default {
   border-radius: 20px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  line-height: 1;
+  transition: border-color 0.2s, color 0.2s;
   letter-spacing: 0.3px;
 }
 
@@ -222,10 +242,9 @@ export default {
 .tela {
   width: 65%;
   margin: 0 auto;
-  height: 5px;
-  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.6), transparent);
-  border-radius: 50%;
-  box-shadow: 0 0 30px rgba(201, 168, 76, 0.25), 0 0 60px rgba(201, 168, 76, 0.08);
+  height: 3px;
+  background: rgba(255, 203, 58, 0.6);
+  border-radius: 2px;
   position: relative;
 }
 
@@ -276,13 +295,16 @@ export default {
 .assento {
   width: 36px;
   height: 30px;
+  box-sizing: border-box;
   border-radius: 5px 5px 3px 3px;
   border: none;
   cursor: pointer;
   font-size: 10px;
   font-weight: 600;
   font-family: inherit;
-  transition: all 0.18s ease;
+  line-height: 1;
+  transition: background 0.18s ease, border-color 0.18s ease,
+              color 0.18s ease, transform 0.18s ease;
   position: relative;
   display: flex;
   align-items: center;
@@ -315,7 +337,6 @@ export default {
   border-color: var(--green);
   color: var(--green);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(46, 204, 138, 0.15);
 }
 
 .assento.disponivel.vip {
@@ -332,11 +353,10 @@ export default {
   background: #2a2010;
   border-color: var(--gold);
   color: var(--gold);
-  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
 }
 
 .assento.ocupado {
-  background: #1a1214;
+  background: var(--red);
   color: #3a2028;
   border: 0.5px solid #2a1820;
   cursor: not-allowed;
@@ -351,14 +371,12 @@ export default {
   border-color: #4a80d0 !important;
   color: #7ab0f0 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(74, 128, 208, 0.25) !important;
 }
 
 .assento.selecionado.vip {
   background: #2a2010 !important;
   border-color: var(--gold) !important;
   color: var(--gold-light) !important;
-  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3) !important;
 }
 
 /* ── Legenda ──────────────────────────────────── */
@@ -388,10 +406,10 @@ export default {
   border: 0.5px solid;
 }
 
-.leg-box.disponivel { background: var(--surface2); border-color: #2a3a34; }
-.leg-box.ocupado    { background: #1a1214;          border-color: #2a1820; }
-.leg-box.vip        { background: #1e1a10;          border-color: #3a2e10; }
-.leg-box.selecionado{ background: #1a3060;          border-color: #4a80d0; }
+.leg-box.disponivel { background: var(--muted); border-color: var(--muted); }
+.leg-box.ocupado    { background: var(--red);          border-color: var(--red); }
+.leg-box.vip        { background: var(--gold);          border-color: var(--gold); }
+.leg-box.selecionado{ background: #1a3060;          border-color: #1a3060; }
 
 /* ── Painel de seleção ────────────────────────── */
 .painel {
@@ -400,6 +418,7 @@ export default {
   border: 0.5px solid #2a2a3a;
   border-radius: 12px;
   padding: 18px 20px;
+  box-sizing: border-box;
   animation: fadeUp 0.25s ease;
 }
 
@@ -432,6 +451,7 @@ export default {
   border-radius: 20px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
+  line-height: 1;
 }
 
 .badge.vip {
@@ -447,27 +467,27 @@ export default {
 }
 
 .badge.status-disp {
-  background: rgba(46, 204, 138, 0.1);
+  background: rgba(46, 204, 138, 0.15);
   color: var(--green);
-  border: 0.5px solid rgba(46, 204, 138, 0.2);
+  border: 0.5px solid var(--green);
 }
 
 .badge.status-ocup {
-  background: rgba(229, 83, 83, 0.1);
+  background: rgba(229, 83, 83, 0.12);
   color: var(--red);
-  border: 0.5px solid rgba(229, 83, 83, 0.2);
+  border: 0.5px solid rgba(229, 83, 83, 0.25);
 }
 
 .btn-acao {
   width: 100%;
+  box-sizing: border-box;
   padding: 11px;
-  border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.2s;
   letter-spacing: 0.3px;
 }
 
@@ -475,20 +495,31 @@ export default {
   background: rgba(46, 204, 138, 0.15);
   color: var(--green);
   border: 0.5px solid rgba(46, 204, 138, 0.3);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .btn-reservar:hover {
   background: rgba(46, 204, 138, 0.22);
-  box-shadow: 0 0 20px rgba(46, 204, 138, 0.1);
+  border-color: rgba(46, 204, 138, 0.5);
+}
+
+.btn-reservar:active {
+  transform: scale(0.98);
 }
 
 .btn-cancelar {
   background: rgba(229, 83, 83, 0.12);
   color: var(--red);
   border: 0.5px solid rgba(229, 83, 83, 0.25);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .btn-cancelar:hover {
   background: rgba(229, 83, 83, 0.18);
+  border-color: rgba(229, 83, 83, 0.45);
+}
+
+.btn-cancelar:active {
+  transform: scale(0.98);
 }
 </style>

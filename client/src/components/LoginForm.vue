@@ -1,47 +1,49 @@
 <template>
-  <div class="login-container">
-    <div class="logo-wrap">
-      <div class="logo-tela"></div>
-      <h1 class="logo-title">Sala 3 — IMAX</h1>
-      <p class="logo-sub">Acesse sua conta</p>
+  <div class="login-bg">
+    <div class="login-container">
+      <div class="logo-wrap">
+        <div class="logo-tela"></div>
+        <h1 class="logo-title">Sala 3 — IMAX</h1>
+        <p class="logo-sub">Acesse sua conta</p>
+      </div>
+
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input
+            id="email"
+            type="email"
+            class="form-input"
+            v-model="email"
+            placeholder="seu@email.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="senha">Senha</label>
+          <input
+            id="senha"
+            type="password"
+            class="form-input"
+            v-model="password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn-entrar">Entrar</button>
+      </form>
+
+      <p v-if="erro" class="erro">{{ erro }}</p>
+
+      <hr class="divider" />
+
+      <p class="rodape">
+        Não tem conta?
+        <button class="btn-registrar" @click="$emit('trocar-modo')">Registrar</button>
+      </p>
     </div>
-
-    <form @submit.prevent="handleLogin">
-      <div class="form-group">
-        <label class="form-label" for="email">E-mail</label>
-        <input
-          id="email"
-          type="email"
-          class="form-input"
-          v-model="email"
-          placeholder="seu@email.com"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="senha">Senha</label>
-        <input
-          id="senha"
-          type="password"
-          class="form-input"
-          v-model="password"
-          placeholder="••••••••"
-          required
-        />
-      </div>
-
-      <button type="submit" class="btn-entrar">Entrar</button>
-    </form>
-
-    <p v-if="erro" class="erro">{{ erro }}</p>
-
-    <hr class="divider" />
-
-    <p class="rodape">
-      Não tem conta?
-      <button class="btn-registrar" @click="$emit('trocar-modo')">Registrar</button>
-    </p>
   </div>
 </template>
 
@@ -80,16 +82,27 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
-.login-container {
-  font-family: 'DM Sans', sans-serif;
+/* ── Wrapper de fundo (cobre 100% da viewport) ── */
+.login-bg {
   background: #0a0a0f;
-  color: #f0eee8;
   min-height: 100vh;
+  width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+/* ── Container de conteúdo ────────────────────── */
+.login-container {
+  font-family: 'DM Sans', sans-serif;
+  color: #f0eee8;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* ── Logo / cabeçalho ─────────────────────────── */
@@ -97,7 +110,6 @@ export default {
   text-align: center;
   margin-bottom: 36px;
   width: 100%;
-  max-width: 360px;
 }
 
 .logo-tela {
@@ -127,7 +139,6 @@ export default {
 /* ── Formulário ───────────────────────────────── */
 form {
   width: 100%;
-  max-width: 360px;
 }
 
 .form-group {
@@ -207,7 +218,6 @@ form {
 /* ── Erro ─────────────────────────────────────── */
 .erro {
   width: 100%;
-  max-width: 360px;
   font-size: 12px;
   color: #e55353;
   margin-top: 10px;
@@ -216,6 +226,7 @@ form {
   border: 0.5px solid rgba(229, 83, 83, 0.2);
   border-radius: 6px;
   padding: 8px;
+  box-sizing: border-box;
 }
 
 /* ── Rodapé ───────────────────────────────────── */
@@ -224,7 +235,6 @@ form {
   border-top: 0.5px solid #1e1e2a;
   margin: 28px 0 20px;
   width: 100%;
-  max-width: 360px;
 }
 
 .rodape {
@@ -232,7 +242,6 @@ form {
   color: #7a7a8c;
   text-align: center;
   width: 100%;
-  max-width: 360px;
 }
 
 .btn-registrar {
