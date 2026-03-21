@@ -27,8 +27,7 @@
               'vip': assento.categoria === 'vip',
               'selecionado': assentoSelecionado?.id === assento.id
             }"
-            :disabled="assento.status === false"
-            :title="`Assento ${assento.identificador} — ${assento.categoria.toUpperCase()} — ${assento.status}`"
+            :title="`Assento ${assento.identificador} — ${assento.categoria.toUpperCase()} — ${assento.status ? 'Disponível' : 'Ocupado'}`"
             @click="selecionarAssento(assento)"
           >
             {{ assento.col }}
@@ -51,11 +50,12 @@
       </div>
       <div class="painel-meta">
         <span class="badge" :class="assentoSelecionado.categoria">{{ assentoSelecionado.categoria }}</span>
-        <span class="badge" :class="assentoSelecionado.status === 'disponivel' ? 'status-disp' : 'status-ocup'">
-          {{ assentoSelecionado.status ? 'Disponível' : 'Indisponível' }}
-          <!-- <p>{{ assentoSelecionado.status }}</p> -->
+        <span class="badge" :class="assentoSelecionado.status ? 'status-disp' : 'status-ocup'">
+          {{ assentoSelecionado.status ? 'Disponível' : 'Ocupado' }}
         </span>
       </div>
+
+      <!-- Só mostra "Confirmar" se disponível -->
       <button
         v-if="assentoSelecionado.status"
         class="btn-acao btn-reservar"
@@ -63,12 +63,14 @@
       >
         Confirmar reserva
       </button>
+
+      <!-- Mostra "Cancelar" SOMENTE se ocupado E (idealmente) se for do usuário logado -->
       <button
-        v-else
+        v-if="!assentoSelecionado.status"
         class="btn-acao btn-cancelar"
         @click="cancelarReserva"
       >
-        Cancelar reserva
+        Cancelar minha reserva
       </button>
     </div>
   </div>
@@ -148,8 +150,13 @@ export default {
       if (!this.assentoSelecionado || !this.assentoSelecionado.id) return;
 
       try {
-        // Mesma coisa aqui: simples e direto
-        await api.post(`/assentos/${this.assentoSelecionado.id}/cancelar`);
+        const token = localStorage.getItem('token'); // Recupera o token salvo no login
+        
+        await api.post(`/assentos/${this.assentoSelecionado.id}/cancelar`, {}, {
+          headers: {
+            'Authorization': `Bearer ${token}` // Envia explicitamente
+          }
+        });
         
         await this.carregarAssentos();
         this.assentoSelecionado = null;
@@ -357,9 +364,9 @@ export default {
 
 .assento.ocupado {
   background: var(--red);
-  color: #3a2028;
-  border: 0.5px solid #2a1820;
-  cursor: not-allowed;
+  color: white;
+  border: 0.5px solid var(--red);
+  cursor: pointer;
 }
 
 .assento.ocupado::after {

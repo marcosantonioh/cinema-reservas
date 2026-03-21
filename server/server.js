@@ -10,6 +10,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+
+
+
 // Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -29,6 +32,10 @@ app.get('/assentos', async (req, res) => {
   res.json(data);
 });
 
+
+
+
+// 2. Reservar assento
 app.post('/assentos/:id/reservar', async (req, res) => {
   const id = Number(req.params.id);
   const token = req.headers.authorization?.split(' ')[1];
@@ -79,41 +86,99 @@ app.post('/assentos/:id/reservar', async (req, res) => {
   res.json({ message: 'Reserva realizada', assento: data[0] });
 });
 
-// 3. Rota de Cancelar (Ajustada)
+
+
+
+// 3. Rota de Cancelar
 app.post('/assentos/:id/cancelar', async (req, res) => {
-  const id = Number(req.params.id); // <--- CONVERSÃO PARA NÚMERO AQUI
-  const token = req.headers.authorization?.split(' ')[1];
+  const id = Number(req.params.id);
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(' ')[1];
 
-  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
+  console.log(`--- Tentativa de cancelamento no assento ID: ${id} ---`);
 
+  // 🔎 Validação do ID
+  if (isNaN(id)) {
+    console.log("❌ ID inválido");
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  // 🔎 Verifica token
+  if (!authHeader) {
+    console.log("❌ Header Authorization não enviado");
+    return res.status(401).json({ error: 'Header Authorization não fornecido' });
+  }
+
+  if (!token) {
+    console.log("❌ Token mal formatado");
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+
+  console.log("Token recebido:", token);
+
+  // 🔐 Autenticação
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return res.status(401).json({ error: 'Não autorizado' });
 
-  // 1. Busca o assento
+  if (authError) {
+    console.error("❌ Erro ao validar token:", authError);
+    return res.status(401).json({ error: authError.message });
+  }
+
+  if (!user) {
+    console.log("❌ Usuário não encontrado");
+    return res.status(401).json({ error: 'Usuário não autenticado' });
+  }
+
+  console.log("Usuário autenticado:", user.id);
+
+  // 🔎 Buscar assento
   const { data: assento, error: findError } = await supabase
     .from('assentos')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (findError || !assento) return res.status(404).json({ error: 'Assento não encontrado' });
-
-  // Segurança: Só permite cancelar se o assento pertencer a quem está logado
-  if (assento.user_id !== user.id) {
-    return res.status(403).json({ error: 'Você não tem permissão para cancelar este assento' });
+  if (findError) {
+    console.error("❌ Erro ao buscar assento:", findError);
+    return res.status(404).json({ error: 'Assento não encontrado' });
   }
 
-  // 2. Libera o assento (status true, user_id null)
-  const { data, error } = await supabase
+  console.log("Assento encontrado:", assento);
+
+  // 🔒 Verifica dono
+  if (assento.user_id !== user.id) {
+    console.log("❌ Usuário não é dono do assento");
+    return res.status(403).json({ error: 'Sem permissão para cancelar' });
+  }
+
+  // 🔎 Verifica se já está livre
+  if (assento.status === true) {
+    console.log("⚠️ Assento já está disponível");
+    return res.status(400).json({ error: 'Assento já está disponível' });
+  }
+
+  // 🔄 Atualiza
+  const { data, error: updateError } = await supabase
     .from('assentos')
-    .update({ 
+    .update({
       status: true,
-      user_id: null 
+      user_id: null
     })
     .eq('id', id)
+    .eq('user_id', user.id) // evita conflito
     .select();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (updateError) {
+    console.error("❌ Erro no update:", updateError);
+    return res.status(500).json({ error: updateError.message });
+  }
+
+  if (!data || data.length === 0) {
+    console.log("❌ Nenhuma linha atualizada (conflito)");
+    return res.status(400).json({ error: 'Não foi possível cancelar (conflito)' });
+  }
+
+  console.log("✅ Cancelamento realizado com sucesso!");
   res.json({ message: 'Cancelamento realizado', assento: data[0] });
 });
 
