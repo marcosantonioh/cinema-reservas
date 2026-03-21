@@ -19,7 +19,6 @@ O projeto segue uma arquitetura cliente-servidor:
 
 client (Vue 3) → server (Node.js/Express) → Supabase (Banco + Auth)
 
-
 ---
 
 ## Tecnologias Utilizadas
@@ -75,15 +74,27 @@ SD_TRABALHO01/
 ### Pré-requisitos
 
 - Node.js instalado
+- npm install
 - Conta no Supabase
 
 ---
 
 ## 1. Clonar o repositório
 
-2. Rodar o Backend
+git clone https://github.com/seu-usuario/seu-repo.git
+cd SD_Trabalho1
+
+2. Criar o Backend
 cd server
 npm install
+
+Crie um arquivo .env:
+
+SUPABASE_URL= sua_url_aqui
+SUPABASE_ANON_KEY= sua_key_aqui
+PORT=3000
+
+Rodar o Backend
 node server.js
 
 
@@ -93,4 +104,53 @@ npm install
 npm run dev
 
 
+Acesse no navegador:
+http://localhost:5173
 
+
+-------
+
+
+## Estrutura do Banco de Dados
+
+Tabela: assentos
+
+CREATE TABLE assentos (
+    id SERIAL PRIMARY KEY,
+    identificador VARCHAR(3) UNIQUE NOT NULL, 
+    status BOOLEAN DEFAULT false, 
+    categoria VARCHAR(10) NOT NULL CHECK (categoria IN ('Normal', 'VIP'))
+);
+
+
+Exemplo de Dados
+
+INSERT INTO assentos (identificador, status, categoria) VALUES
+    ('A1', true, 'VIP'), ('A2', true, 'VIP'), ('A3', true, 'VIP'), ('A4', true, 'VIP'), ('A5', true, 'VIP'),
+    ('B1', true, 'Normal'), ('B2', true, 'Normal'), ('B3', true, 'Normal'), ('B4', true, 'Normal'), ('B5', true, 'Normal'),
+    ('C1', true, 'Normal'), ('C2', true, 'Normal'), ('C3', true, 'Normal'), ('C4', true, 'Normal'), ('C5', true, 'Normal'),
+    ('D1', true, 'Normal'), ('D2', true, 'Normal'), ('D3', true, 'Normal'), ('D4', true, 'Normal'), ('D5', true, 'Normal');
+
+
+## 📸 Prints do Sistema
+
+### Tela de Login
+![Tela de Login](./assets/login.png)
+
+### Tela de Assentos
+![Tela de Assentos](./assets/assentos.png)
+
+### Assento Selecionado
+![Assento Selecionado](./assets/selecionado.png)
+
+### Reserva realizada
+![Reserva](./assets/reserva.png)
+
+### Reserva realizada
+![Reservada](./assets/reservada.png)
+
+### Selecionar Reservada
+![Selecionar Reservada](./assets/selecionar_reservada.png)
+
+### Reserva cancelada
+![Reserva cancelada](./assets/cancelada.png)
