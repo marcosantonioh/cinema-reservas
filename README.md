@@ -7,7 +7,7 @@ Projeto desenvolvido para a disciplina de Sistemas Distribuídos.
 Implementar um sistema distribuído de reserva de assentos de cinema, utilizando:
 
 - Frontend separado do backend
-- Comunicação via API
+- Comunicação via API REST
 - Autenticação de usuários
 - Persistência de dados em nuvem
 
@@ -55,17 +55,32 @@ client (Vue 3) → server (Node.js/Express) → Supabase (Banco + Auth)
 
 ## Estrutura do Projeto
 
-SD_TRABALHO01/
-├── client/                  
+SD_Trabalho1/
+├── client/
+│   ├── .vscode/
+│   ├── node_modules/
+│   ├── public/
 │   ├── src/
-│   │   └── App.vue          
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── services/
+│   │   ├── App.vue
+│   │   ├── main.js
+│   │   ├── style.css
+│   │   └── supabase.js
+│   ├── .gitignore
+│   ├── index.html
+│   ├── package-lock.json
 │   ├── package.json
+│   ├── README.md
 │   └── vite.config.js
-├── server/                  
-│   ├── server.js             
-│   ├── .env                 
-│   ├── package.json                     
-├── README.md
+└── server/
+    ├── node_modules/
+    ├── .env
+    ├── package-lock.json
+    ├── package.json
+    ├── server.js
+    └── README.md
 
 ---
 
